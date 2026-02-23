@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Hand Tracking Demo</title>
+  <style>
+    body { margin: 0; overflow: hidden; background: #000; }
+    canvas { position: absolute; }
+    #box {
+      width: 80px;
+      height: 80px;
+      background: cyan;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border-radius: 12px;
+    }
+  </style>
+</head>
+<body>
+
+<video id="video" autoplay playsinline style="display:none"></video>
+<canvas id="canvas"></canvas>
+<div id="box"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+
+<script>
+const video = document.getElementById('video');
+const box = document.getElementById('box');
+
+const hands = new Hands({
+  locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+});
+
+hands.setOptions({
+  maxNumHands: 1,
+  minDetectionConfidence: 0.7,
+  minTrackingConfidence: 0.7
+});
+
+hands.onResults(results => {
+  if (results.multiHandLandmarks.length > 0) {
+    const hand = results.multiHandLandmarks[0];
+    const x = hand[9].x * window.innerWidth;
+    const y = hand[9].y * window.innerHeight;
+    box.style.left = x + "px";
+    box.style.top = y + "px";
+  }
+});
+
+const camera = new Camera(video, {
+  onFrame: async () => {
+    await hands.send({image: video});
+  },
+  width: 640,
+  height: 480
+});
+camera.start();
+</script>
+
+</body>
+</html>
