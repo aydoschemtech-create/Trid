@@ -1,35 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Hand Tracking Demo</title>
-  <style>
-    body { margin: 0; overflow: hidden; background: #000; }
-    canvas { position: absolute; }
-    #box {
-      width: 80px;
-      height: 80px;
-      background: cyan;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      border-radius: 12px;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Hand Tracking</title>
+<style>
+body {
+  margin: 0;
+  background: black;
+  overflow: hidden;
+}
+#output {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+#box {
+  width: 60px;
+  height: 60px;
+  background: cyan;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+</style>
 </head>
 <body>
 
-<video id="video" autoplay playsinline style="display:none"></video>
-<canvas id="canvas"></canvas>
+<video id="video" autoplay playsinline></video>
+<canvas id="output"></canvas>
 <div id="box"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 
 <script>
-const video = document.getElementById('video');
+const videoElement = document.getElementById('video');
 const box = document.getElementById('box');
+
+navigator.mediaDevices.getUserMedia({ video: true })
+  .then(stream => {
+    videoElement.srcObject = stream;
+  })
+  .catch(err => {
+    alert("Kamera ochilmadi: " + err);
+  });
 
 const hands = new Hands({
   locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
@@ -42,7 +57,7 @@ hands.setOptions({
 });
 
 hands.onResults(results => {
-  if (results.multiHandLandmarks.length > 0) {
+  if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
     const hand = results.multiHandLandmarks[0];
     const x = hand[9].x * window.innerWidth;
     const y = hand[9].y * window.innerHeight;
@@ -51,13 +66,14 @@ hands.onResults(results => {
   }
 });
 
-const camera = new Camera(video, {
+const camera = new Camera(videoElement, {
   onFrame: async () => {
-    await hands.send({image: video});
+    await hands.send({ image: videoElement });
   },
   width: 640,
   height: 480
 });
+
 camera.start();
 </script>
 
